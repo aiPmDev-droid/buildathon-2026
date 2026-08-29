@@ -6,7 +6,7 @@ const TABS = [
 
 export default function BottomTabBar({ active, onChange }) {
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-20 pb-[env(safe-area-inset-bottom)]">
+    <nav className="shrink-0 pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto max-w-md bg-white/90 backdrop-blur border-t border-coffee-100 shadow-[0_-4px_20px_-8px_rgba(69,48,31,0.15)]">
         <div className="flex">
           {TABS.map((tab) => {

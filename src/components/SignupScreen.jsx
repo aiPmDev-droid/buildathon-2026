@@ -59,7 +59,6 @@ export default function SignupScreen({ profile, onSignedUp }) {
               value={form.email}
               onChange={update("email")}
               placeholder="jane.bruin.mba2027@anderson.ucla.edu"
-              disabled={isEditing}
             />
           </Field>
           <Field label="Favorite drink">
