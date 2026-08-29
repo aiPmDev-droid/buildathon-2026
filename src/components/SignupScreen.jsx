@@ -249,7 +249,7 @@ function SignupWizard({ onJoined }) {
               loading={loading}
               onClick={handleJoin}
             >
-              Join this week's round
+              Get Matched
             </Button>
           )}
         </div>

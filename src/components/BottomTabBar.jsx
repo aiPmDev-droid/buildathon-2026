@@ -1,4 +1,5 @@
 const TABS = [
+  { id: "home", label: "Home", icon: "🏠" },
   { id: "profile", label: "Profile", icon: "👤" },
   { id: "round", label: "Round", icon: "☕" },
   { id: "match", label: "Match", icon: "🤝" },

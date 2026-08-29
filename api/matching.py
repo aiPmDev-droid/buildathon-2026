@@ -18,27 +18,25 @@ def _already_matched_pairs(existing_matches: list[dict]) -> set[frozenset]:
 OVERLAP_FIELDS = ["favorite_spot_la", "excited_about", "biggest_challenge"]
 
 
-def _overlap_count(p1: dict, p2: dict) -> int:
-    """How many answers two people happen to share, verbatim. Lower is better —
-    the app deliberately pairs people with the LEAST overlap, to push people
-    outside their usual circle rather than validate what they already know."""
-    count = 0
+def _has_overlap(p1: dict, p2: dict) -> bool:
+    """True if two people share ANY answer verbatim."""
     for field in OVERLAP_FIELDS:
         v1, v2 = _norm(p1.get(field)), _norm(p2.get(field))
         if v1 and v1 == v2:
-            count += 1
-    return count
+            return True
+    return False
 
 
 def run_matching(
     opted_in_people: list[dict], existing_matches: list[dict]
 ) -> tuple[list[tuple[str, str]], list[str]]:
-    """Greedily pair opted-in people, prioritizing the LEAST overlap in answers
-    (pushes people toward someone outside their usual circle), excluding
-    repeat matches and same-city/same-section pairs.
+    """Greedily pair opted-in people. A pair is only eligible if they share
+    NONE of their answers, aren't from the same city/section, and have never
+    been matched before — the app is built to push people outside their
+    usual circle, not validate what they already have in common.
     """
     people = [p for p in opted_in_people if p.get("email")]
-    random.shuffle(people)  # vary tie-break order between runs
+    random.shuffle(people)  # vary assignment order between runs
 
     already_matched = _already_matched_pairs(existing_matches)
 
@@ -55,14 +53,13 @@ def run_matching(
             section1, section2 = _norm(p1.get("section")), _norm(p2.get("section"))
             if section1 and section1 == section2:
                 continue
-            score = _overlap_count(p1, p2)
-            candidate_pairs.append((score, e1, e2))
-
-    candidate_pairs.sort(key=lambda x: x[0])  # ascending: least overlap first
+            if _has_overlap(p1, p2):
+                continue
+            candidate_pairs.append((e1, e2))
 
     assigned: set[str] = set()
     result_pairs: list[tuple[str, str]] = []
-    for score, e1, e2 in candidate_pairs:
+    for e1, e2 in candidate_pairs:
         if e1 in assigned or e2 in assigned:
             continue
         result_pairs.append((e1, e2))

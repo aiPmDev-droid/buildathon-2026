@@ -171,7 +171,7 @@ export function Toast({ message, tone = "success" }) {
   }
   return (
     <div
-      className={`fixed top-4 inset-x-4 z-30 mx-auto max-w-md rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${tones[tone]} animate-[fade-in_0.2s_ease-out]`}
+      className={`absolute top-4 inset-x-4 z-30 mx-auto max-w-md rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${tones[tone]} animate-[fade-in_0.2s_ease-out]`}
     >
       {message}
     </div>

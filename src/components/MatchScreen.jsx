@@ -121,23 +121,19 @@ export default function MatchScreen({ profile, refreshKey }) {
                   What makes you different
                 </p>
                 <div className="flex flex-col gap-2">
-                  {match.highlights.map((h, i) => (
-                    <div
-                      key={i}
-                      className="flex items-start gap-2 rounded-xl bg-navy-50 px-3.5 py-2.5"
-                    >
-                      <span className="text-accent-500 text-sm mt-0.5">♥</span>
-                      <p className="text-sm text-navy-800 leading-snug">{h}</p>
-                    </div>
-                  ))}
+                  {match.highlights.map((h, i) => {
+                    const partnerFirst = match.partner.name.trim().split(" ")[0]
+                    return (
+                      <div key={i} className="rounded-xl bg-navy-50 px-3.5 py-2.5">
+                        <p className="text-xs font-semibold text-navy-400 mb-1">{h.label}</p>
+                        <p className="text-sm text-navy-800 leading-snug">You: {h.mine}</p>
+                        <p className="text-sm text-navy-500 leading-snug mt-0.5">
+                          {partnerFirst}: {h.theirs}
+                        </p>
+                      </div>
+                    )
+                  })}
                 </div>
-              </div>
-
-              <div className="mt-4">
-                <p className="text-xs uppercase tracking-wide text-navy-400 font-medium mb-1.5">
-                  Icebreaker
-                </p>
-                <p className="text-navy-700 leading-relaxed">{match.icebreaker}</p>
               </div>
 
               <MessageThread

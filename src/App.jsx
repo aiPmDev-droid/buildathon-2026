@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { getPerson, runRound } from "./api"
+import HomeScreen from "./components/HomeScreen"
 import LandingPage from "./components/LandingPage"
 import PhoneFrame from "./components/PhoneFrame"
 import SignupScreen from "./components/SignupScreen"
@@ -51,6 +52,7 @@ export default function App() {
   return (
     <PhoneFrame active={tab} onChange={setTab} showTabBar={view === "app"}>
       {view === "landing" && <LandingPage onJoin={() => setView("app")} />}
+      {view === "app" && tab === "home" && <HomeScreen />}
       {view === "app" && tab === "profile" && (
         <SignupScreen
           profile={profile}
