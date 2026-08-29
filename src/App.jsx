@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { getPerson } from "./api"
 import BottomTabBar from "./components/BottomTabBar"
+import PhoneFrame from "./components/PhoneFrame"
 import SignupScreen from "./components/SignupScreen"
 import RoundScreen from "./components/RoundScreen"
 import MatchScreen from "./components/MatchScreen"
@@ -31,7 +32,7 @@ export default function App() {
   }
 
   return (
-    <>
+    <PhoneFrame>
       {tab === "profile" && <SignupScreen profile={profile} onSignedUp={handleSignedUp} />}
       {tab === "round" && (
         <RoundScreen
@@ -42,6 +43,6 @@ export default function App() {
       )}
       {tab === "match" && <MatchScreen profile={profile} refreshKey={matchRefreshKey} />}
       <BottomTabBar active={tab} onChange={setTab} />
-    </>
+    </PhoneFrame>
   )
 }

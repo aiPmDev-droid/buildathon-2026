@@ -1,6 +1,6 @@
 export function Screen({ title, subtitle, children }) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-cream-100 to-cream-200 pb-28 pt-10 px-5">
+    <div className="min-h-full bg-gradient-to-b from-cream-100 to-cream-200 pb-28 pt-10 px-5">
       <div className="mx-auto max-w-md">
         {title && (
           <header className="mb-6 px-1">
