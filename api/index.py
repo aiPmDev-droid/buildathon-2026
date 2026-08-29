@@ -6,8 +6,9 @@ from fastapi import FastAPI, HTTPException  # noqa: E402
 from pydantic import BaseModel, EmailStr, Field  # noqa: E402
 
 from . import storage  # noqa: E402
-from .icebreaker import build_reveal  # noqa: E402
+from .icebreaker import build_highlights  # noqa: E402
 from .matching import run_matching  # noqa: E402
+from .witty import generate_witty_headline  # noqa: E402
 
 app = FastAPI()
 
@@ -108,7 +109,14 @@ def latest_match(email: str):
     if person is None or partner is None:
         raise HTTPException(status_code=404, detail="Profile missing for match")
 
-    reveal = build_reveal(person, partner)
+    headline = latest.get("headline")
+    if not headline:
+        # Generated once per match (not per person) and cached, so both sides
+        # see the same line and it doesn't regenerate on every page view.
+        headline = generate_witty_headline(person, partner)
+        storage.set_match_headline(latest["id"], headline)
+
+    highlights = build_highlights(person, partner)
 
     return {
         "match_id": latest["id"],
@@ -121,7 +129,8 @@ def latest_match(email: str):
             "excited_about": partner["excited_about"],
             "biggest_challenge": partner["biggest_challenge"],
         },
-        **reveal,
+        "headline": headline,
+        "highlights": highlights,
     }
 
 

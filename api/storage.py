@@ -51,6 +51,7 @@ def _ensure_schema(conn) -> None:
         )
         """
     )
+    conn.execute("ALTER TABLE matches ADD COLUMN IF NOT EXISTS headline TEXT")
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS messages (
@@ -92,6 +93,7 @@ def _serialize_match(row: dict) -> dict:
         "person_a_email": row["person_a_email"],
         "person_b_email": row["person_b_email"],
         "matched_at": row["matched_at"].isoformat() if row["matched_at"] else None,
+        "headline": row.get("headline"),
     }
 
 
@@ -114,7 +116,7 @@ def get_people() -> list[dict]:
 def get_matches() -> list[dict]:
     with _connect() as conn:
         rows = conn.execute(
-            "SELECT id, round_id, person_a_email, person_b_email, matched_at "
+            "SELECT id, round_id, person_a_email, person_b_email, matched_at, headline "
             "FROM matches ORDER BY matched_at"
         ).fetchall()
         return [_serialize_match(r) for r in rows]
@@ -223,7 +225,8 @@ def get_latest_match_for_email(email: str) -> Optional[dict]:
     with _connect() as conn:
         row = conn.execute(
             """
-            SELECT id, round_id, person_a_email, person_b_email, matched_at FROM matches
+            SELECT id, round_id, person_a_email, person_b_email, matched_at, headline
+            FROM matches
             WHERE person_a_email = %s OR person_b_email = %s
             ORDER BY matched_at DESC
             LIMIT 1
@@ -231,6 +234,14 @@ def get_latest_match_for_email(email: str) -> Optional[dict]:
             (email, email),
         ).fetchone()
     return _serialize_match(row) if row else None
+
+
+def set_match_headline(match_id: int, headline: str) -> None:
+    with _connect() as conn:
+        conn.execute(
+            "UPDATE matches SET headline = %s WHERE id = %s",
+            (headline, match_id),
+        )
 
 
 def get_messages(match_id: int) -> list[dict]:

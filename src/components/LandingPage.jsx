@@ -23,8 +23,8 @@ export default function LandingPage({ onJoin }) {
         </h1>
 
         <p className="mt-4 text-navy-500 leading-relaxed">
-          AnderMeet pairs you with someone outside your usual circle — a different program,
-          a different section, someone you probably haven't met — for a coffee chat.
+          AnderMeet pairs you with someone who shares nothing in common with you — a
+          different program, a different section, a different city before Anderson.
         </p>
 
         <div className="mt-6 flex flex-col items-center gap-3">
