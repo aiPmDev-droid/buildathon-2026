@@ -13,3 +13,4 @@ api/.python-version
 *.log
 .DS_Store
 .vercel
+.env*

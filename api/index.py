@@ -1,9 +1,13 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, EmailStr, Field
+from dotenv import load_dotenv
 
-from . import sheets
-from .icebreaker import build_reveal
-from .matching import run_matching
+load_dotenv(".env.local")
+
+from fastapi import FastAPI, HTTPException  # noqa: E402
+from pydantic import BaseModel, EmailStr, Field  # noqa: E402
+
+from . import storage  # noqa: E402
+from .icebreaker import build_reveal  # noqa: E402
+from .matching import run_matching  # noqa: E402
 
 app = FastAPI()
 
@@ -29,13 +33,13 @@ def health():
 
 @app.post("/api/people")
 def signup(payload: SignupRequest):
-    profile = sheets.upsert_person(payload.model_dump())
+    profile = storage.upsert_person(payload.model_dump())
     return profile
 
 
 @app.get("/api/people/{email}")
 def get_person(email: str):
-    person = sheets.get_person(email)
+    person = storage.get_person(email)
     if person is None:
         raise HTTPException(status_code=404, detail="Person not found")
     return person
@@ -43,7 +47,7 @@ def get_person(email: str):
 
 @app.post("/api/people/{email}/optin")
 def set_opt_in(email: str, payload: OptInRequest):
-    person = sheets.set_opt_in(email, payload.opted_in)
+    person = storage.set_opt_in(email, payload.opted_in)
     if person is None:
         raise HTTPException(status_code=404, detail="Person not found")
     return person
@@ -51,17 +55,17 @@ def set_opt_in(email: str, payload: OptInRequest):
 
 @app.post("/api/rounds/run")
 def run_round():
-    people = sheets.get_people()
+    people = storage.get_people()
     opted_in_people = [p for p in people if p.get("opted_in")]
-    existing_matches = sheets.get_matches()
+    existing_matches = storage.get_matches()
 
     pairs, unmatched = run_matching(opted_in_people, existing_matches)
 
-    round_id = sheets.next_round_id()
-    sheets.append_matches(round_id, pairs)
+    round_id = storage.next_round_id()
+    storage.append_matches(round_id, pairs)
 
     all_considered = [p["email"] for p in opted_in_people]
-    sheets.reset_opt_in_for_emails(all_considered)
+    storage.reset_opt_in_for_emails(all_considered)
 
     return {
         "round_id": round_id,
@@ -74,7 +78,7 @@ def run_round():
 
 @app.get("/api/matches/{email}")
 def latest_match(email: str):
-    matches = sheets.get_matches()
+    matches = storage.get_matches()
     email_norm = email.strip().lower()
 
     mine = [
@@ -95,8 +99,8 @@ def latest_match(email: str):
         else latest["person_a_email"]
     )
 
-    person = sheets.get_person(email_norm)
-    partner = sheets.get_person(partner_email)
+    person = storage.get_person(email_norm)
+    partner = storage.get_person(partner_email)
     if person is None or partner is None:
         raise HTTPException(status_code=404, detail="Profile missing for match")
 
