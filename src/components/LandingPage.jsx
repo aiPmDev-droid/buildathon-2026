@@ -45,13 +45,13 @@ export default function LandingPage({ onJoin }) {
             onClick={onJoin}
             className="w-full rounded-full bg-navy-700 text-white px-6 py-3 font-semibold hover:bg-navy-800 transition-colors shadow-md shadow-navy-900/15"
           >
-            Join AnderMeet
+            Get Started
           </button>
           <a
             href="#how-it-works"
             className="w-full rounded-full border border-navy-100 bg-white px-6 py-3 font-semibold text-navy-800 hover:bg-navy-50 transition-colors"
           >
-            How it works
+            How it Works
           </a>
         </div>
       </main>

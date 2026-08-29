@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { getMatch } from "../api"
+import { celebrateMatch } from "../confetti"
 import { Screen, Card, Spinner, Button } from "./ui"
 import MessageThread from "./MessageThread"
 
@@ -19,6 +20,7 @@ export default function MatchScreen({ profile, refreshKey }) {
         if (cancelled) return
         setMatch(data)
         setState("found")
+        celebrateMatch(data.match_id)
       })
       .catch((err) => {
         if (cancelled) return
@@ -113,6 +115,23 @@ export default function MatchScreen({ profile, refreshKey }) {
 
               <div className="mt-5 rounded-2xl bg-sage-500/10 border border-sage-500/20 px-4 py-3">
                 <p className="text-sm font-medium text-sage-500">{match.headline}</p>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-xs uppercase tracking-wide text-navy-400 font-medium mb-2">
+                  What makes you different
+                </p>
+                <div className="flex flex-col gap-2">
+                  {match.highlights.map((h, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2 rounded-xl bg-navy-50 px-3.5 py-2.5"
+                    >
+                      <span className="text-accent-500 text-sm mt-0.5">♥</span>
+                      <p className="text-sm text-navy-800 leading-snug">{h}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="mt-4">
