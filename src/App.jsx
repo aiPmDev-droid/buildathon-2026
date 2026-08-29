@@ -48,27 +48,26 @@ export default function App() {
     setTab("match")
   }
 
-  if (view === "landing") {
-    return <LandingPage onJoin={() => setView("app")} />
-  }
-
   return (
-    <PhoneFrame active={tab} onChange={setTab}>
-      {tab === "profile" && (
+    <PhoneFrame active={tab} onChange={setTab} showTabBar={view === "app"}>
+      {view === "landing" && <LandingPage onJoin={() => setView("app")} />}
+      {view === "app" && tab === "profile" && (
         <SignupScreen
           profile={profile}
           onSignedUp={handleSignedUp}
           onJoinedRound={handleJoinedRound}
         />
       )}
-      {tab === "round" && (
+      {view === "app" && tab === "round" && (
         <RoundScreen
           profile={profile}
           onProfileUpdate={setProfile}
           onRoundComplete={handleRoundComplete}
         />
       )}
-      {tab === "match" && <MatchScreen profile={profile} refreshKey={matchRefreshKey} />}
+      {view === "app" && tab === "match" && (
+        <MatchScreen profile={profile} refreshKey={matchRefreshKey} />
+      )}
     </PhoneFrame>
   )
 }
