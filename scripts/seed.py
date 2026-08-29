@@ -1,10 +1,10 @@
-"""One-time seed script: writes fake people + historical matches to Redis.
+"""One-time seed script: writes fake people + historical matches to Postgres.
 
 Run from the repo root:
     .venv/bin/python scripts/seed.py
 
-Requires UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN in the
-environment (or a .env.local at the repo root).
+Requires DATABASE_URL in the environment (or a .env.local at the repo root).
+Clears and re-seeds the people/matches tables, so it's safe to re-run.
 """
 
 import os
@@ -22,8 +22,8 @@ from api import storage  # noqa: E402
 NOW = datetime.now(timezone.utc)
 
 
-def days_ago(n: int) -> str:
-    return (NOW - timedelta(days=n)).isoformat()
+def days_ago(n: int) -> datetime:
+    return NOW - timedelta(days=n)
 
 
 PEOPLE = [
@@ -61,25 +61,43 @@ HISTORICAL_ROUNDS = [
 
 
 def main():
-    people = [
-        {**p, "email": p["email"].lower(), "opted_in": True, "created_at": days_ago(30)}
-        for p in PEOPLE
-    ]
-    storage._write_list(storage.PEOPLE_KEY, people)
-    print(f"Seeded {len(people)} people.")
+    with storage._connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM matches")
+            cur.execute("DELETE FROM people")
 
-    matches = [
-        {
-            "round_id": round_id,
-            "person_a_email": a,
-            "person_b_email": b,
-            "matched_at": days_ago(age),
-        }
-        for a, b, round_id, age in HISTORICAL_ROUNDS
-    ]
-    storage._write_list(storage.MATCHES_KEY, matches)
-    print(f"Seeded {len(matches)} historical matches across "
-          f"{len({m['round_id'] for m in matches})} rounds.")
+            for p in PEOPLE:
+                cur.execute(
+                    """
+                    INSERT INTO people
+                        (email, name, drink, want_to_learn, program, country, section,
+                         opted_in, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        p["email"].lower(),
+                        p["name"],
+                        p["drink"],
+                        p["want_to_learn"],
+                        p["program"],
+                        p["country"],
+                        p["section"],
+                        True,
+                        days_ago(30),
+                    ),
+                )
+            print(f"Seeded {len(PEOPLE)} people.")
+
+            for a, b, round_id, age in HISTORICAL_ROUNDS:
+                cur.execute(
+                    """
+                    INSERT INTO matches (round_id, person_a_email, person_b_email, matched_at)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (round_id, a, b, days_ago(age)),
+                )
+            rounds = len({r[2] for r in HISTORICAL_ROUNDS})
+            print(f"Seeded {len(HISTORICAL_ROUNDS)} historical matches across {rounds} rounds.")
 
 
 if __name__ == "__main__":

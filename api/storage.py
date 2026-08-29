@@ -1,141 +1,164 @@
-import json
 import os
-from datetime import datetime, timezone
-from functools import lru_cache
+from contextlib import contextmanager
+from typing import Optional
 
-from upstash_redis import Redis
+import psycopg
+from psycopg.rows import dict_row
 
-PEOPLE_KEY = "people"
-MATCHES_KEY = "matches"
-
-PERSON_FIELDS = [
-    "name",
-    "email",
-    "drink",
-    "want_to_learn",
-    "program",
-    "country",
-    "section",
-]
+_SCHEMA_READY = False
 
 
-def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+@contextmanager
+def _connect():
+    conn = psycopg.connect(os.environ["DATABASE_URL"], row_factory=dict_row, autocommit=True)
+    try:
+        _ensure_schema(conn)
+        yield conn
+    finally:
+        conn.close()
 
 
-@lru_cache(maxsize=1)
-def _redis() -> Redis:
-    return Redis(
-        url=os.environ["UPSTASH_REDIS_REST_URL"],
-        token=os.environ["UPSTASH_REDIS_REST_TOKEN"],
+def _ensure_schema(conn) -> None:
+    global _SCHEMA_READY
+    if _SCHEMA_READY:
+        return
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS people (
+            email TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            drink TEXT NOT NULL,
+            want_to_learn TEXT NOT NULL,
+            program TEXT NOT NULL,
+            country TEXT NOT NULL,
+            section TEXT NOT NULL,
+            opted_in BOOLEAN NOT NULL DEFAULT FALSE,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+        """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS matches (
+            id SERIAL PRIMARY KEY,
+            round_id TEXT NOT NULL,
+            person_a_email TEXT NOT NULL REFERENCES people(email),
+            person_b_email TEXT NOT NULL REFERENCES people(email),
+            matched_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+        """
+    )
+    _SCHEMA_READY = True
 
 
-def _read_list(key: str) -> list[dict]:
-    raw = _redis().get(key)
-    if not raw:
-        return []
-    return json.loads(raw)
+def _serialize_person(row: dict) -> dict:
+    return {
+        "name": row["name"],
+        "email": row["email"],
+        "drink": row["drink"],
+        "want_to_learn": row["want_to_learn"],
+        "program": row["program"],
+        "country": row["country"],
+        "section": row["section"],
+        "opted_in": row["opted_in"],
+        "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+    }
 
 
-def _write_list(key: str, items: list[dict]) -> None:
-    _redis().set(key, json.dumps(items))
+def _serialize_match(row: dict) -> dict:
+    return {
+        "round_id": row["round_id"],
+        "person_a_email": row["person_a_email"],
+        "person_b_email": row["person_b_email"],
+        "matched_at": row["matched_at"].isoformat() if row["matched_at"] else None,
+    }
 
 
 def get_people() -> list[dict]:
-    return _read_list(PEOPLE_KEY)
+    with _connect() as conn:
+        rows = conn.execute("SELECT * FROM people ORDER BY created_at").fetchall()
+        return [_serialize_person(r) for r in rows]
 
 
 def get_matches() -> list[dict]:
-    return _read_list(MATCHES_KEY)
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT round_id, person_a_email, person_b_email, matched_at "
+            "FROM matches ORDER BY matched_at"
+        ).fetchall()
+        return [_serialize_match(r) for r in rows]
 
 
-def _find_person_index(people: list[dict], email: str):
-    email_norm = email.strip().lower()
-    for i, p in enumerate(people):
-        if p.get("email", "").strip().lower() == email_norm:
-            return i
-    return None
-
-
-def get_person(email: str) -> dict | None:
-    people = get_people()
-    idx = _find_person_index(people, email)
-    return people[idx] if idx is not None else None
+def get_person(email: str) -> Optional[dict]:
+    email = email.strip().lower()
+    with _connect() as conn:
+        row = conn.execute("SELECT * FROM people WHERE email = %s", (email,)).fetchone()
+        return _serialize_person(row) if row else None
 
 
 def upsert_person(profile: dict) -> dict:
-    people = get_people()
     email = profile["email"].strip().lower()
-    idx = _find_person_index(people, email)
-    fields = {k: profile[k] for k in PERSON_FIELDS if k != "email"}
+    with _connect() as conn:
+        row = conn.execute(
+            """
+            INSERT INTO people (email, name, drink, want_to_learn, program, country, section)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (email) DO UPDATE SET
+                name = EXCLUDED.name,
+                drink = EXCLUDED.drink,
+                want_to_learn = EXCLUDED.want_to_learn,
+                program = EXCLUDED.program,
+                country = EXCLUDED.country,
+                section = EXCLUDED.section
+            RETURNING *
+            """,
+            (
+                email,
+                profile["name"],
+                profile["drink"],
+                profile["want_to_learn"],
+                profile["program"],
+                profile["country"],
+                profile["section"],
+            ),
+        ).fetchone()
+        return _serialize_person(row)
 
-    if idx is None:
-        record = {
-            "email": email,
-            **fields,
-            "opted_in": False,
-            "created_at": now_iso(),
-        }
-        people.append(record)
-    else:
-        existing = people[idx]
-        record = {
-            "email": email,
-            **fields,
-            "opted_in": existing.get("opted_in", False),
-            "created_at": existing.get("created_at", now_iso()),
-        }
-        people[idx] = record
 
-    _write_list(PEOPLE_KEY, people)
-    return record
-
-
-def set_opt_in(email: str, opted_in: bool) -> dict | None:
-    people = get_people()
-    idx = _find_person_index(people, email)
-    if idx is None:
-        return None
-    people[idx]["opted_in"] = opted_in
-    _write_list(PEOPLE_KEY, people)
-    return people[idx]
+def set_opt_in(email: str, opted_in: bool) -> Optional[dict]:
+    email = email.strip().lower()
+    with _connect() as conn:
+        row = conn.execute(
+            "UPDATE people SET opted_in = %s WHERE email = %s RETURNING *",
+            (opted_in, email),
+        ).fetchone()
+        return _serialize_person(row) if row else None
 
 
 def reset_opt_in_for_emails(emails: list[str]) -> None:
     if not emails:
         return
-    targets = {e.strip().lower() for e in emails}
-    people = get_people()
-    changed = False
-    for p in people:
-        if p.get("email", "").strip().lower() in targets and p.get("opted_in"):
-            p["opted_in"] = False
-            changed = True
-    if changed:
-        _write_list(PEOPLE_KEY, people)
+    normalized = [e.strip().lower() for e in emails]
+    with _connect() as conn:
+        conn.execute("UPDATE people SET opted_in = FALSE WHERE email = ANY(%s)", (normalized,))
 
 
 def append_matches(round_id: str, pairs: list[tuple[str, str]]) -> None:
     if not pairs:
         return
-    matched_at = now_iso()
-    matches = get_matches()
-    for a, b in pairs:
-        matches.append(
-            {
-                "round_id": round_id,
-                "person_a_email": a,
-                "person_b_email": b,
-                "matched_at": matched_at,
-            }
-        )
-    _write_list(MATCHES_KEY, matches)
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.executemany(
+                "INSERT INTO matches (round_id, person_a_email, person_b_email) "
+                "VALUES (%s, %s, %s)",
+                [(round_id, a, b) for a, b in pairs],
+            )
 
 
 def next_round_id() -> str:
-    matches = get_matches()
-    existing = {m["round_id"] for m in matches if m.get("round_id")}
+    with _connect() as conn:
+        rows = conn.execute("SELECT DISTINCT round_id FROM matches").fetchall()
+    existing = {r["round_id"] for r in rows}
     n = 1
     while str(n) in existing:
         n += 1
