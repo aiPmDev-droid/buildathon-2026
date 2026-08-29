@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.vercel/
+.vercel
+.venv/
+__pycache__/
+api/pyproject.toml
+api/uv.lock
+api/.python-version
+*.pyc
+.env
+.env.local
+*.log
+.DS_Store
+.vercel
