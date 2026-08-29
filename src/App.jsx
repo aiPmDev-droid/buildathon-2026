@@ -1,40 +1,47 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react"
+import { getPerson } from "./api"
+import BottomTabBar from "./components/BottomTabBar"
+import SignupScreen from "./components/SignupScreen"
+import RoundScreen from "./components/RoundScreen"
+import MatchScreen from "./components/MatchScreen"
+
+const STORAGE_KEY = "coffee_roulette_email"
 
 export default function App() {
-  const [status, setStatus] = useState('checking')
+  const [tab, setTab] = useState("profile")
+  const [profile, setProfile] = useState(null)
+  const [matchRefreshKey, setMatchRefreshKey] = useState(0)
 
   useEffect(() => {
-    fetch('/api/health')
-      .then((res) => res.json())
-      .then((data) => setStatus(data.status === 'ok' ? 'ok' : 'error'))
-      .catch(() => setStatus('error'))
+    const savedEmail = localStorage.getItem(STORAGE_KEY)
+    if (!savedEmail) return
+    getPerson(savedEmail)
+      .then(setProfile)
+      .catch(() => localStorage.removeItem(STORAGE_KEY))
   }, [])
 
+  const handleSignedUp = (saved) => {
+    setProfile(saved)
+    localStorage.setItem(STORAGE_KEY, saved.email)
+  }
+
+  const handleRoundComplete = () => {
+    setMatchRefreshKey((n) => n + 1)
+    setTab("match")
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 flex items-center justify-center p-6">
-      <div className="bg-white rounded-3xl shadow-xl shadow-orange-900/10 p-8 max-w-sm w-full text-center">
-        <div className="text-4xl mb-3">☕️</div>
-        <h1 className="text-2xl font-semibold text-stone-800 tracking-tight">
-          Coffee Roulette
-        </h1>
-        <p className="text-stone-500 mt-2 text-sm">
-          UCLA Anderson coffee chat matching
-        </p>
-        <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-stone-100 px-4 py-2 text-sm">
-          <span
-            className={`h-2 w-2 rounded-full ${
-              status === 'ok'
-                ? 'bg-green-500'
-                : status === 'checking'
-                  ? 'bg-amber-400 animate-pulse'
-                  : 'bg-red-500'
-            }`}
-          />
-          <span className="text-stone-600">
-            API: {status === 'checking' ? 'checking…' : status}
-          </span>
-        </div>
-      </div>
-    </div>
+    <>
+      {tab === "profile" && <SignupScreen profile={profile} onSignedUp={handleSignedUp} />}
+      {tab === "round" && (
+        <RoundScreen
+          profile={profile}
+          onProfileUpdate={setProfile}
+          onRoundComplete={handleRoundComplete}
+        />
+      )}
+      {tab === "match" && <MatchScreen profile={profile} refreshKey={matchRefreshKey} />}
+      <BottomTabBar active={tab} onChange={setTab} />
+    </>
   )
 }
