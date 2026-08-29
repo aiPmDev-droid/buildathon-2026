@@ -30,7 +30,7 @@ def _ensure_schema(conn) -> None:
             email TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             program TEXT NOT NULL,
-            country TEXT NOT NULL,
+            city TEXT NOT NULL,
             section TEXT NOT NULL,
             favorite_spot_la TEXT NOT NULL,
             excited_about TEXT NOT NULL,
@@ -68,7 +68,7 @@ def _ensure_schema(conn) -> None:
 PERSON_FIELDS = [
     "name",
     "program",
-    "country",
+    "city",
     "section",
     "favorite_spot_la",
     "excited_about",
@@ -151,13 +151,13 @@ def upsert_person(profile: dict) -> dict:
         row = conn.execute(
             """
             INSERT INTO people
-                (email, name, program, country, section,
+                (email, name, program, city, section,
                  favorite_spot_la, excited_about, biggest_challenge)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (email) DO UPDATE SET
                 name = EXCLUDED.name,
                 program = EXCLUDED.program,
-                country = EXCLUDED.country,
+                city = EXCLUDED.city,
                 section = EXCLUDED.section,
                 favorite_spot_la = EXCLUDED.favorite_spot_la,
                 excited_about = EXCLUDED.excited_about,
@@ -168,7 +168,7 @@ def upsert_person(profile: dict) -> dict:
                 email,
                 profile["name"],
                 profile["program"],
-                profile["country"],
+                profile["city"],
                 profile["section"],
                 profile["favorite_spot_la"],
                 profile["excited_about"],

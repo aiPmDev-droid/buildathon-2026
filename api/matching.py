@@ -35,7 +35,7 @@ def run_matching(
 ) -> tuple[list[tuple[str, str]], list[str]]:
     """Greedily pair opted-in people, prioritizing the LEAST overlap in answers
     (pushes people toward someone outside their usual circle), excluding
-    repeat matches and same-country/same-section pairs.
+    repeat matches and same-city/same-section pairs.
     """
     people = [p for p in opted_in_people if p.get("email")]
     random.shuffle(people)  # vary tie-break order between runs
@@ -49,8 +49,8 @@ def run_matching(
             e1, e2 = _norm(p1["email"]), _norm(p2["email"])
             if frozenset({e1, e2}) in already_matched:
                 continue
-            country1, country2 = _norm(p1.get("country")), _norm(p2.get("country"))
-            if country1 and country1 == country2:
+            city1, city2 = _norm(p1.get("city")), _norm(p2.get("city"))
+            if city1 and city1 == city2:
                 continue
             section1, section2 = _norm(p1.get("section")), _norm(p2.get("section"))
             if section1 and section1 == section2:

@@ -2,14 +2,13 @@ import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { getMatch } from "../api"
 import { celebrateMatch } from "../confetti"
-import { Screen, Card, Spinner, Button } from "./ui"
+import { Screen, Card, Spinner } from "./ui"
 import MessageThread from "./MessageThread"
 
 export default function MatchScreen({ profile, refreshKey }) {
   const [state, setState] = useState("idle") // idle | loading | found | empty | error
   const [match, setMatch] = useState(null)
   const [errorMessage, setErrorMessage] = useState("")
-  const [manualRefresh, setManualRefresh] = useState(0)
 
   useEffect(() => {
     if (!profile) return
@@ -34,7 +33,7 @@ export default function MatchScreen({ profile, refreshKey }) {
     return () => {
       cancelled = true
     }
-  }, [profile, refreshKey, manualRefresh])
+  }, [profile, refreshKey])
 
   if (!profile) {
     return (
@@ -150,16 +149,6 @@ export default function MatchScreen({ profile, refreshKey }) {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {(state === "found" || state === "empty") && (
-        <Button
-          variant="secondary"
-          className="mt-4"
-          onClick={() => setManualRefresh((n) => n + 1)}
-        >
-          Refresh
-        </Button>
-      )}
     </Screen>
   )
 }

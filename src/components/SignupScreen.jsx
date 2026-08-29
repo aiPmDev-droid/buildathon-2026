@@ -18,7 +18,7 @@ const EMPTY = {
   name: "",
   email: "",
   program: PROGRAMS[0],
-  country: "",
+  city: "",
   section: "",
   favorite_spot_la: "",
   excited_about: "",
@@ -72,8 +72,8 @@ function EditProfileForm({ profile, onSaved }) {
           <Field label="Section / subdivision">
             <Input required value={form.section} onChange={update("section")} placeholder="A" />
           </Field>
-          <Field label="Country">
-            <Input required value={form.country} onChange={update("country")} />
+          <Field label="City before Anderson">
+            <Input required value={form.city} onChange={update("city")} />
           </Field>
           <Field label="Favorite spot in LA">
             <Input
@@ -111,7 +111,7 @@ function SignupWizard({ onJoined }) {
 
   const stepValid = {
     1: form.name.trim() && form.email.trim(),
-    2: form.program.trim() && form.section.trim() && form.country.trim(),
+    2: form.program.trim() && form.section.trim() && form.city.trim(),
     3:
       form.favorite_spot_la.trim() &&
       form.excited_about.trim() &&
@@ -195,12 +195,8 @@ function SignupWizard({ onJoined }) {
             <Field label="Section / subdivision">
               <Input value={form.section} onChange={update("section")} placeholder="Section A" />
             </Field>
-            <Field label="Country">
-              <Input
-                value={form.country}
-                onChange={update("country")}
-                placeholder="United States"
-              />
+            <Field label="City before Anderson">
+              <Input value={form.city} onChange={update("city")} placeholder="Chicago" />
             </Field>
           </div>
         )}

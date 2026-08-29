@@ -44,14 +44,41 @@ export function celebrateMatch(matchId) {
   })
   document.body.appendChild(canvas)
 
-  const instance = confetti.create(canvas, { resize: false, useWorker: true })
+  const instance = confetti.create(canvas, { resize: false, useWorker: false })
+  const colors = ["#ff5d5d", "#ffb02e", "#ffe45e", "#4ade80", "#38bdf8", "#a78bfa", "#f472b6"]
+
+  // Two eruptions from the bottom corners, angled inward and upward — reads
+  // as a burst from the bottom rather than confetti just raining down.
   instance({
-    particleCount: 90,
-    spread: 70,
-    startVelocity: 35,
-    origin: { y: 0.35 },
-    colors: ["#2c5372", "#3d6a90", "#6690b3", "#5f88a0", "#f7f5f0"],
+    particleCount: 60,
+    angle: 60,
+    spread: 60,
+    startVelocity: 55,
+    gravity: 0.9,
+    ticks: 200,
+    origin: { x: 0.1, y: 1 },
+    colors,
+  })
+  instance({
+    particleCount: 60,
+    angle: 120,
+    spread: 60,
+    startVelocity: 55,
+    gravity: 0.9,
+    ticks: 200,
+    origin: { x: 0.9, y: 1 },
+    colors,
+  })
+  instance({
+    particleCount: 40,
+    angle: 90,
+    spread: 80,
+    startVelocity: 60,
+    gravity: 0.9,
+    ticks: 200,
+    origin: { x: 0.5, y: 1 },
+    colors,
   })
 
-  setTimeout(() => canvas.remove(), 3500)
+  setTimeout(() => canvas.remove(), 4000)
 }
