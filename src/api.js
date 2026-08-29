@@ -35,3 +35,14 @@ export function runRound() {
 export function getMatch(email) {
   return request(`/api/matches/${encodeURIComponent(email)}`)
 }
+
+export function getMessages(email) {
+  return request(`/api/matches/${encodeURIComponent(email)}/messages`)
+}
+
+export function sendMessage(email, body) {
+  return request(`/api/matches/${encodeURIComponent(email)}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ body }),
+  })
+}

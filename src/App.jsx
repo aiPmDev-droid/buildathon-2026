@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react"
-import { getPerson } from "./api"
+import { getPerson, runRound } from "./api"
+import LandingPage from "./components/LandingPage"
 import PhoneFrame from "./components/PhoneFrame"
 import SignupScreen from "./components/SignupScreen"
 import RoundScreen from "./components/RoundScreen"
 import MatchScreen from "./components/MatchScreen"
 
-const STORAGE_KEY = "coffee_roulette_email"
+const STORAGE_KEY = "andermeet_email"
 
 export default function App() {
+  const [view, setView] = useState("landing") // landing | app
   const [tab, setTab] = useState("profile")
   const [profile, setProfile] = useState(null)
   const [matchRefreshKey, setMatchRefreshKey] = useState(0)
@@ -16,7 +18,10 @@ export default function App() {
     const savedEmail = localStorage.getItem(STORAGE_KEY)
     if (!savedEmail) return
     getPerson(savedEmail)
-      .then(setProfile)
+      .then((p) => {
+        setProfile(p)
+        setView("app")
+      })
       .catch(() => localStorage.removeItem(STORAGE_KEY))
   }, [])
 
@@ -25,14 +30,37 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY, saved.email)
   }
 
+  const handleJoinedRound = async (saved) => {
+    setProfile(saved)
+    localStorage.setItem(STORAGE_KEY, saved.email)
+    setView("app")
+    try {
+      await runRound()
+    } catch {
+      // fall through — Match tab shows whatever state actually exists
+    }
+    setMatchRefreshKey((n) => n + 1)
+    setTab("match")
+  }
+
   const handleRoundComplete = () => {
     setMatchRefreshKey((n) => n + 1)
     setTab("match")
   }
 
+  if (view === "landing") {
+    return <LandingPage onJoin={() => setView("app")} />
+  }
+
   return (
     <PhoneFrame active={tab} onChange={setTab}>
-      {tab === "profile" && <SignupScreen profile={profile} onSignedUp={handleSignedUp} />}
+      {tab === "profile" && (
+        <SignupScreen
+          profile={profile}
+          onSignedUp={handleSignedUp}
+          onJoinedRound={handleJoinedRound}
+        />
+      )}
       {tab === "round" && (
         <RoundScreen
           profile={profile}

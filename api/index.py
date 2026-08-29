@@ -15,15 +15,20 @@ app = FastAPI()
 class SignupRequest(BaseModel):
     name: str = Field(min_length=1)
     email: EmailStr
-    drink: str = Field(min_length=1)
-    want_to_learn: str = Field(min_length=1)
     program: str = Field(min_length=1)
     country: str = Field(min_length=1)
     section: str = Field(min_length=1)
+    favorite_spot_la: str = Field(min_length=1)
+    excited_about: str = Field(min_length=1)
+    biggest_challenge: str = Field(min_length=1)
 
 
 class OptInRequest(BaseModel):
     opted_in: bool
+
+
+class MessageRequest(BaseModel):
+    body: str = Field(min_length=1, max_length=2000)
 
 
 @app.get("/api/health")
@@ -55,8 +60,17 @@ def set_opt_in(email: str, payload: OptInRequest):
 
 @app.post("/api/rounds/run")
 def run_round():
+    """Runs immediately (on demand, no real scheduler) but each person is
+    capped at one new match per rolling week: anyone matched within the
+    cooldown window is skipped even if still opted in, so re-running the
+    round right after a match doesn't re-match the same people again."""
     people = storage.get_people()
-    opted_in_people = [p for p in people if p.get("opted_in")]
+    recently_matched = storage.get_recently_matched_emails()
+    opted_in_people = [
+        p
+        for p in people
+        if p.get("opted_in") and p["email"] not in recently_matched
+    ]
     existing_matches = storage.get_matches()
 
     pairs, unmatched = run_matching(opted_in_people, existing_matches)
@@ -78,20 +92,10 @@ def run_round():
 
 @app.get("/api/matches/{email}")
 def latest_match(email: str):
-    matches = storage.get_matches()
     email_norm = email.strip().lower()
-
-    mine = [
-        m
-        for m in matches
-        if m.get("person_a_email", "").strip().lower() == email_norm
-        or m.get("person_b_email", "").strip().lower() == email_norm
-    ]
-    if not mine:
+    latest = storage.get_latest_match_for_email(email_norm)
+    if latest is None:
         raise HTTPException(status_code=404, detail="No match yet")
-
-    mine.sort(key=lambda m: m.get("matched_at", ""), reverse=True)
-    latest = mine[0]
 
     partner_email = (
         latest["person_b_email"]
@@ -107,13 +111,32 @@ def latest_match(email: str):
     reveal = build_reveal(person, partner)
 
     return {
+        "match_id": latest["id"],
         "round_id": latest["round_id"],
         "matched_at": latest["matched_at"],
         "partner": {
             "name": partner["name"],
             "program": partner["program"],
-            "drink": partner["drink"],
-            "want_to_learn": partner["want_to_learn"],
+            "favorite_spot_la": partner["favorite_spot_la"],
+            "excited_about": partner["excited_about"],
+            "biggest_challenge": partner["biggest_challenge"],
         },
         **reveal,
     }
+
+
+@app.get("/api/matches/{email}/messages")
+def list_messages(email: str):
+    latest = storage.get_latest_match_for_email(email)
+    if latest is None:
+        raise HTTPException(status_code=404, detail="No match yet")
+    return storage.get_messages(latest["id"])
+
+
+@app.post("/api/matches/{email}/messages")
+def send_message(email: str, payload: MessageRequest):
+    email_norm = email.strip().lower()
+    latest = storage.get_latest_match_for_email(email_norm)
+    if latest is None:
+        raise HTTPException(status_code=404, detail="No match yet")
+    return storage.add_message(latest["id"], email_norm, payload.body.strip())

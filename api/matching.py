@@ -15,22 +15,27 @@ def _already_matched_pairs(existing_matches: list[dict]) -> set[frozenset]:
     return pairs
 
 
-def _shared_interest(p1: dict, p2: dict) -> int:
-    score = 0
-    if _norm(p1.get("drink")) and _norm(p1.get("drink")) == _norm(p2.get("drink")):
-        score += 1
-    if _norm(p1.get("want_to_learn")) and _norm(p1.get("want_to_learn")) == _norm(
-        p2.get("want_to_learn")
-    ):
-        score += 1
-    return score
+OVERLAP_FIELDS = ["favorite_spot_la", "excited_about", "biggest_challenge"]
+
+
+def _overlap_count(p1: dict, p2: dict) -> int:
+    """How many answers two people happen to share, verbatim. Lower is better —
+    the app deliberately pairs people with the LEAST overlap, to push people
+    outside their usual circle rather than validate what they already know."""
+    count = 0
+    for field in OVERLAP_FIELDS:
+        v1, v2 = _norm(p1.get(field)), _norm(p2.get(field))
+        if v1 and v1 == v2:
+            count += 1
+    return count
 
 
 def run_matching(
     opted_in_people: list[dict], existing_matches: list[dict]
 ) -> tuple[list[tuple[str, str]], list[str]]:
-    """Greedily pair opted-in people, prioritizing shared drink/want_to_learn,
-    excluding repeat matches and same-country/same-section pairs.
+    """Greedily pair opted-in people, prioritizing the LEAST overlap in answers
+    (pushes people toward someone outside their usual circle), excluding
+    repeat matches and same-country/same-section pairs.
     """
     people = [p for p in opted_in_people if p.get("email")]
     random.shuffle(people)  # vary tie-break order between runs
@@ -50,10 +55,10 @@ def run_matching(
             section1, section2 = _norm(p1.get("section")), _norm(p2.get("section"))
             if section1 and section1 == section2:
                 continue
-            score = _shared_interest(p1, p2)
+            score = _overlap_count(p1, p2)
             candidate_pairs.append((score, e1, e2))
 
-    candidate_pairs.sort(key=lambda x: x[0], reverse=True)
+    candidate_pairs.sort(key=lambda x: x[0])  # ascending: least overlap first
 
     assigned: set[str] = set()
     result_pairs: list[tuple[str, str]] = []

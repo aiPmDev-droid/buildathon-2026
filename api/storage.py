@@ -5,6 +5,8 @@ from typing import Optional
 import psycopg
 from psycopg.rows import dict_row
 
+REMATCH_COOLDOWN_DAYS = 7
+
 _SCHEMA_READY = False
 
 
@@ -27,11 +29,12 @@ def _ensure_schema(conn) -> None:
         CREATE TABLE IF NOT EXISTS people (
             email TEXT PRIMARY KEY,
             name TEXT NOT NULL,
-            drink TEXT NOT NULL,
-            want_to_learn TEXT NOT NULL,
             program TEXT NOT NULL,
             country TEXT NOT NULL,
             section TEXT NOT NULL,
+            favorite_spot_la TEXT NOT NULL,
+            excited_about TEXT NOT NULL,
+            biggest_challenge TEXT NOT NULL,
             opted_in BOOLEAN NOT NULL DEFAULT FALSE,
             created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )
@@ -48,18 +51,35 @@ def _ensure_schema(conn) -> None:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS messages (
+            id SERIAL PRIMARY KEY,
+            match_id INTEGER NOT NULL REFERENCES matches(id),
+            sender_email TEXT NOT NULL,
+            body TEXT NOT NULL,
+            sent_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        )
+        """
+    )
     _SCHEMA_READY = True
+
+
+PERSON_FIELDS = [
+    "name",
+    "program",
+    "country",
+    "section",
+    "favorite_spot_la",
+    "excited_about",
+    "biggest_challenge",
+]
 
 
 def _serialize_person(row: dict) -> dict:
     return {
-        "name": row["name"],
         "email": row["email"],
-        "drink": row["drink"],
-        "want_to_learn": row["want_to_learn"],
-        "program": row["program"],
-        "country": row["country"],
-        "section": row["section"],
+        **{f: row[f] for f in PERSON_FIELDS},
         "opted_in": row["opted_in"],
         "created_at": row["created_at"].isoformat() if row["created_at"] else None,
     }
@@ -67,10 +87,21 @@ def _serialize_person(row: dict) -> dict:
 
 def _serialize_match(row: dict) -> dict:
     return {
+        "id": row["id"],
         "round_id": row["round_id"],
         "person_a_email": row["person_a_email"],
         "person_b_email": row["person_b_email"],
         "matched_at": row["matched_at"].isoformat() if row["matched_at"] else None,
+    }
+
+
+def _serialize_message(row: dict) -> dict:
+    return {
+        "id": row["id"],
+        "match_id": row["match_id"],
+        "sender_email": row["sender_email"],
+        "body": row["body"],
+        "sent_at": row["sent_at"].isoformat() if row["sent_at"] else None,
     }
 
 
@@ -83,10 +114,28 @@ def get_people() -> list[dict]:
 def get_matches() -> list[dict]:
     with _connect() as conn:
         rows = conn.execute(
-            "SELECT round_id, person_a_email, person_b_email, matched_at "
+            "SELECT id, round_id, person_a_email, person_b_email, matched_at "
             "FROM matches ORDER BY matched_at"
         ).fetchall()
         return [_serialize_match(r) for r in rows]
+
+
+def get_recently_matched_emails(within_days: int = REMATCH_COOLDOWN_DAYS) -> set[str]:
+    """Emails that appeared in any match within the cooldown window — ineligible
+    for a new round until it passes, even if still opted in."""
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT person_a_email, person_b_email FROM matches
+            WHERE matched_at > now() - (%s || ' days')::interval
+            """,
+            (within_days,),
+        ).fetchall()
+    emails: set[str] = set()
+    for r in rows:
+        emails.add(r["person_a_email"])
+        emails.add(r["person_b_email"])
+    return emails
 
 
 def get_person(email: str) -> Optional[dict]:
@@ -101,25 +150,29 @@ def upsert_person(profile: dict) -> dict:
     with _connect() as conn:
         row = conn.execute(
             """
-            INSERT INTO people (email, name, drink, want_to_learn, program, country, section)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO people
+                (email, name, program, country, section,
+                 favorite_spot_la, excited_about, biggest_challenge)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (email) DO UPDATE SET
                 name = EXCLUDED.name,
-                drink = EXCLUDED.drink,
-                want_to_learn = EXCLUDED.want_to_learn,
                 program = EXCLUDED.program,
                 country = EXCLUDED.country,
-                section = EXCLUDED.section
+                section = EXCLUDED.section,
+                favorite_spot_la = EXCLUDED.favorite_spot_la,
+                excited_about = EXCLUDED.excited_about,
+                biggest_challenge = EXCLUDED.biggest_challenge
             RETURNING *
             """,
             (
                 email,
                 profile["name"],
-                profile["drink"],
-                profile["want_to_learn"],
                 profile["program"],
                 profile["country"],
                 profile["section"],
+                profile["favorite_spot_la"],
+                profile["excited_about"],
+                profile["biggest_challenge"],
             ),
         ).fetchone()
         return _serialize_person(row)
@@ -163,3 +216,41 @@ def next_round_id() -> str:
     while str(n) in existing:
         n += 1
     return str(n)
+
+
+def get_latest_match_for_email(email: str) -> Optional[dict]:
+    email = email.strip().lower()
+    with _connect() as conn:
+        row = conn.execute(
+            """
+            SELECT id, round_id, person_a_email, person_b_email, matched_at FROM matches
+            WHERE person_a_email = %s OR person_b_email = %s
+            ORDER BY matched_at DESC
+            LIMIT 1
+            """,
+            (email, email),
+        ).fetchone()
+    return _serialize_match(row) if row else None
+
+
+def get_messages(match_id: int) -> list[dict]:
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM messages WHERE match_id = %s ORDER BY sent_at",
+            (match_id,),
+        ).fetchall()
+    return [_serialize_message(r) for r in rows]
+
+
+def add_message(match_id: int, sender_email: str, body: str) -> dict:
+    sender_email = sender_email.strip().lower()
+    with _connect() as conn:
+        row = conn.execute(
+            """
+            INSERT INTO messages (match_id, sender_email, body)
+            VALUES (%s, %s, %s)
+            RETURNING *
+            """,
+            (match_id, sender_email, body),
+        ).fetchone()
+    return _serialize_message(row)
