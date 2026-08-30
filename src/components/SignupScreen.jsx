@@ -144,23 +144,6 @@ function SignupWizard({ onJoined }) {
         {step === 1 && (
           <div>
             <p className="font-semibold text-navy-900 mb-4">The basics</p>
-            <Field label="Photo">
-              <div className="flex items-center gap-3">
-                <div className="h-14 w-14 rounded-full bg-navy-50 flex items-center justify-center text-2xl text-navy-300">
-                  😄
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setToast({ message: "Photo uploads coming soon", tone: "success" })
-                  }
-                  className="rounded-full border border-navy-100 bg-white px-4 py-2 text-sm font-medium text-navy-800 hover:bg-navy-50 transition-colors"
-                >
-                  Upload photo
-                </button>
-              </div>
-              <p className="mt-1.5 text-xs text-navy-400">Helps your match recognize you!</p>
-            </Field>
             <Field label="Name">
               <Input
                 autoFocus
