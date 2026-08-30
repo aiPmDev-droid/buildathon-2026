@@ -81,8 +81,10 @@ PEOPLE = [
          biggest_challenge="Keeping up with the stochastic calculus problem sets"),
     # Demo safety net (see storage.ALWAYS_AVAILABLE_EMAILS): exempt from the
     # rematch cooldown and never opted out, so a live tester can always get
-    # a match. Two different programs/sections/towns for broad coverage
-    # against whatever a tester signs up as.
+    # a match. They're also hard-excluded from pairing with each other (see
+    # matching.py), so they can never "use each other up" -- three of them
+    # (odd count) gives headroom for multiple real testers matching
+    # concurrently, on top of the single-tester guarantee two already gave.
     dict(name="Sam Whitfield", email="sam.whitfield@anderson.ucla.edu", program="Faculty/Staff",
          town="Reykjavik", section="ZZ1", favorite_spot_la="The Last Bookstore",
          excited_about="Mentoring first-years this quarter",
@@ -91,6 +93,10 @@ PEOPLE = [
          town="Nairobi", section="ZZ2", favorite_spot_la="Malibu Pier",
          excited_about="Training for a triathlon this spring",
          biggest_challenge="Derivatives pricing problem sets"),
+    dict(name="Taylor Osei", email="taylor.osei@anderson.ucla.edu", program="EMBA",
+         town="Wellington", section="ZZ3", favorite_spot_la="Echo Park Lake",
+         excited_about="A half-marathon along the LA river trail",
+         biggest_challenge="Fitting case prep in around a full-time job"),
 ]
 
 # (person_a, person_b, round_id, days_ago) — all opposite section/town,

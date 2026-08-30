@@ -14,6 +14,7 @@ REMATCH_COOLDOWN_DAYS = 7
 ALWAYS_AVAILABLE_EMAILS = {
     "sam.whitfield@anderson.ucla.edu",
     "jordan.blake@anderson.ucla.edu",
+    "taylor.osei@anderson.ucla.edu",
 }
 
 _SCHEMA_READY = False
