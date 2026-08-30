@@ -1,4 +1,5 @@
 import { useState } from "react"
+import logo from "../assets/logo.png"
 import HowItWorksSheet from "./HowItWorksSheet"
 
 export default function LandingPage({ onJoin }) {
@@ -7,9 +8,7 @@ export default function LandingPage({ onJoin }) {
   return (
     <div className="min-h-full bg-cream-100/60">
       <header className="px-5 py-5 flex items-center gap-2.5">
-        <span className="h-8 w-8 rounded-full bg-navy-700 text-white flex items-center justify-center text-sm">
-          ☕
-        </span>
+        <img src={logo} alt="AnderMeet" className="h-8 w-8 rounded-full object-cover" />
         <span className="font-semibold text-navy-900 text-lg">AnderMeet</span>
       </header>
 
@@ -46,9 +45,7 @@ export default function LandingPage({ onJoin }) {
       <footer className="border-t border-navy-100">
         <div className="px-5 py-6 flex flex-col items-center gap-2 text-sm text-navy-500 text-center">
           <div className="flex items-center gap-2 font-semibold text-navy-800">
-            <span className="h-6 w-6 rounded-full bg-navy-700 text-white flex items-center justify-center text-xs">
-              ☕
-            </span>
+            <img src={logo} alt="AnderMeet" className="h-6 w-6 rounded-full object-cover" />
             AnderMeet
           </div>
           <p>Built by Anderson students, for the Anderson community.</p>
