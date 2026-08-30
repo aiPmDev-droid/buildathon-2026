@@ -7,6 +7,15 @@ from psycopg.rows import dict_row
 
 REMATCH_COOLDOWN_DAYS = 7
 
+# Demo safety net: these profiles are always eligible for a new round,
+# bypassing the rematch cooldown, and never get their opt-in reset. So
+# whoever tests the app (e.g. a judge) can always get a live match,
+# regardless of who else has already been paired up recently.
+ALWAYS_AVAILABLE_EMAILS = {
+    "sam.whitfield@anderson.ucla.edu",
+    "jordan.blake@anderson.ucla.edu",
+}
+
 _SCHEMA_READY = False
 
 
@@ -204,9 +213,9 @@ def set_opt_in(email: str, opted_in: bool) -> Optional[dict]:
 
 
 def reset_opt_in_for_emails(emails: list[str]) -> None:
-    if not emails:
+    normalized = [e.strip().lower() for e in emails if e.strip().lower() not in ALWAYS_AVAILABLE_EMAILS]
+    if not normalized:
         return
-    normalized = [e.strip().lower() for e in emails]
     with _connect() as conn:
         conn.execute("UPDATE people SET opted_in = FALSE WHERE email = ANY(%s)", (normalized,))
 

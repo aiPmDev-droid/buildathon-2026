@@ -79,6 +79,18 @@ PEOPLE = [
          town="Dubai", section="E", favorite_spot_la="The Getty Center",
          excited_about="A ski trip to Mammoth this winter",
          biggest_challenge="Keeping up with the stochastic calculus problem sets"),
+    # Demo safety net (see storage.ALWAYS_AVAILABLE_EMAILS): exempt from the
+    # rematch cooldown and never opted out, so a live tester can always get
+    # a match. Two different programs/sections/towns for broad coverage
+    # against whatever a tester signs up as.
+    dict(name="Sam Whitfield", email="sam.whitfield@anderson.ucla.edu", program="Faculty/Staff",
+         town="Reykjavik", section="ZZ1", favorite_spot_la="The Last Bookstore",
+         excited_about="Mentoring first-years this quarter",
+         biggest_challenge="Balancing teaching load with committee work"),
+    dict(name="Jordan Blake", email="jordan.blake@anderson.ucla.edu", program="MFE",
+         town="Nairobi", section="ZZ2", favorite_spot_la="Malibu Pier",
+         excited_about="Training for a triathlon this spring",
+         biggest_challenge="Derivatives pricing problem sets"),
 ]
 
 # (person_a, person_b, round_id, days_ago) — all opposite section/town,

@@ -64,13 +64,17 @@ def run_round():
     """Runs immediately (on demand, no real scheduler) but each person is
     capped at one new match per rolling week: anyone matched within the
     cooldown window is skipped even if still opted in, so re-running the
-    round right after a match doesn't re-match the same people again."""
+    round right after a match doesn't re-match the same people again.
+    Exception: storage.ALWAYS_AVAILABLE_EMAILS are exempt from the cooldown
+    (and never get opted out) — a demo safety net so a live tester can
+    always get a match regardless of what's already been paired up."""
     people = storage.get_people()
     recently_matched = storage.get_recently_matched_emails()
     opted_in_people = [
         p
         for p in people
-        if p.get("opted_in") and p["email"] not in recently_matched
+        if p.get("opted_in")
+        and (p["email"] not in recently_matched or p["email"] in storage.ALWAYS_AVAILABLE_EMAILS)
     ]
     existing_matches = storage.get_matches()
 
