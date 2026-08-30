@@ -15,8 +15,8 @@ export default function HomeScreen() {
           Outside your usual circle, <span className="text-accent-500">on purpose.</span>
         </h1>
         <p className="mt-3 text-sm text-navy-500 leading-relaxed">
-          AnderMeet pairs you with someone who shares nothing in common with you, a
-          different program, a different section, a different town before Anderson.
+          AnderMeet pairs you with someone who you probably haven't met yet, from a
+          different program, a different section, or a different town before Anderson.
         </p>
         <button
           onClick={() => setShowHowItWorks(true)}
