@@ -1,5 +1,7 @@
 import random
 
+from .storage import ALWAYS_AVAILABLE_EMAILS
+
 
 def _norm(value: str) -> str:
     return (value or "").strip().lower()
@@ -34,6 +36,8 @@ def run_matching(
         for j in range(i + 1, len(people)):
             p1, p2 = people[i], people[j]
             e1, e2 = _norm(p1["email"]), _norm(p2["email"])
+            if e1 in ALWAYS_AVAILABLE_EMAILS and e2 in ALWAYS_AVAILABLE_EMAILS:
+                continue  # fallback profiles must never "use each other up"
             if frozenset({e1, e2}) in already_matched:
                 continue
             program1, program2 = _norm(p1.get("program")), _norm(p2.get("program"))
