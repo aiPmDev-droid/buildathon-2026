@@ -4,12 +4,12 @@ const STEPS = [
   {
     icon: "👋",
     title: "Sign up",
-    body: "Tell us a bit about yourself: your program, your section, and a couple of quick questions.",
+    body: "Tell us a bit about yourself: your program, your section, and a few other quick questions.",
   },
   {
-    icon: "🔀",
+    icon: "🙌",
     title: "Get matched",
-    body: "Matching runs the moment you opt in — paired with someone from the Anderson community you probably haven't met, capped at one match per week.",
+    body: "Matching runs the moment you opt in, paired with someone from the Anderson community you probably haven't met, capped at one match per week.",
   },
   {
     icon: "☕",

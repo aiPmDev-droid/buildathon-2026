@@ -5,7 +5,7 @@ export default function LandingPage({ onJoin }) {
   const [showHowItWorks, setShowHowItWorks] = useState(false)
 
   return (
-    <div className="min-h-full bg-cream-100">
+    <div className="min-h-full bg-cream-100/60">
       <header className="px-5 py-5 flex items-center gap-2.5">
         <span className="h-8 w-8 rounded-full bg-navy-700 text-white flex items-center justify-center text-sm">
           ☕
@@ -23,8 +23,8 @@ export default function LandingPage({ onJoin }) {
         </h1>
 
         <p className="mt-4 text-navy-500 leading-relaxed">
-          AnderMeet pairs you with someone who shares nothing in common with you — a
-          different program, a different section, a different city before Anderson.
+          AnderMeet pairs you with someone who shares nothing in common with you, a
+          different program, a different section, a different town before Anderson.
         </p>
 
         <div className="mt-6 flex flex-col items-center gap-3">

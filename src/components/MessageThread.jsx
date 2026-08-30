@@ -52,7 +52,7 @@ export default function MessageThread({ email, matchId, partnerFirstName }) {
       <div className="rounded-2xl border border-navy-100 bg-white overflow-hidden">
         <div className="max-h-64 overflow-y-auto p-3 space-y-2">
           {messages.length === 0 && (
-            <p className="text-sm text-navy-300 text-center py-6">No messages yet — say hi!</p>
+            <p className="text-sm text-navy-300 text-center py-6">No messages yet, say hi!</p>
           )}
           {messages.map((m) => {
             const mine = m.sender_email === email

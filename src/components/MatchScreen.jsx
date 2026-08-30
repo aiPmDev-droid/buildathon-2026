@@ -76,7 +76,7 @@ export default function MatchScreen({ profile, refreshKey }) {
               <div className="text-3xl mb-2">🫙</div>
               <p className="font-semibold text-navy-800">No match yet</p>
               <p className="text-sm text-navy-500 mt-1">
-                Opt in on the Round tab — matching runs immediately once there's someone
+                Opt in on the Round tab. Matching runs immediately once there's someone
                 eligible to pair you with.
               </p>
             </Card>

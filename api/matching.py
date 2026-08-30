@@ -15,25 +15,14 @@ def _already_matched_pairs(existing_matches: list[dict]) -> set[frozenset]:
     return pairs
 
 
-OVERLAP_FIELDS = ["favorite_spot_la", "excited_about", "biggest_challenge"]
-
-
-def _has_overlap(p1: dict, p2: dict) -> bool:
-    """True if two people share ANY answer verbatim."""
-    for field in OVERLAP_FIELDS:
-        v1, v2 = _norm(p1.get(field)), _norm(p2.get(field))
-        if v1 and v1 == v2:
-            return True
-    return False
-
-
 def run_matching(
     opted_in_people: list[dict], existing_matches: list[dict]
 ) -> tuple[list[tuple[str, str]], list[str]]:
-    """Greedily pair opted-in people. A pair is only eligible if they share
-    NONE of their answers, aren't from the same city/section, and have never
-    been matched before — the app is built to push people outside their
-    usual circle, not validate what they already have in common.
+    """Greedily pair opted-in people. A pair is only eligible if they're in a
+    different program, section, and town before Anderson (people who likely
+    already know each other), and have never been matched before. Shared
+    interests are fine, not excluded: any overlap in their answers is just
+    material for the witty match-reveal line, not something to avoid.
     """
     people = [p for p in opted_in_people if p.get("email")]
     random.shuffle(people)  # vary assignment order between runs
@@ -47,13 +36,14 @@ def run_matching(
             e1, e2 = _norm(p1["email"]), _norm(p2["email"])
             if frozenset({e1, e2}) in already_matched:
                 continue
-            city1, city2 = _norm(p1.get("city")), _norm(p2.get("city"))
-            if city1 and city1 == city2:
+            program1, program2 = _norm(p1.get("program")), _norm(p2.get("program"))
+            if program1 and program1 == program2:
                 continue
             section1, section2 = _norm(p1.get("section")), _norm(p2.get("section"))
             if section1 and section1 == section2:
                 continue
-            if _has_overlap(p1, p2):
+            town1, town2 = _norm(p1.get("town")), _norm(p2.get("town"))
+            if town1 and town1 == town2:
                 continue
             candidate_pairs.append((e1, e2))
 

@@ -30,7 +30,7 @@ def _ensure_schema(conn) -> None:
             email TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             program TEXT NOT NULL,
-            city TEXT NOT NULL,
+            town TEXT NOT NULL,
             section TEXT NOT NULL,
             favorite_spot_la TEXT NOT NULL,
             excited_about TEXT NOT NULL,
@@ -38,6 +38,19 @@ def _ensure_schema(conn) -> None:
             opted_in BOOLEAN NOT NULL DEFAULT FALSE,
             created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )
+        """
+    )
+    conn.execute(
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'people' AND column_name = 'city'
+            ) THEN
+                ALTER TABLE people RENAME COLUMN city TO town;
+            END IF;
+        END $$;
         """
     )
     conn.execute(
@@ -69,7 +82,7 @@ def _ensure_schema(conn) -> None:
 PERSON_FIELDS = [
     "name",
     "program",
-    "city",
+    "town",
     "section",
     "favorite_spot_la",
     "excited_about",
@@ -153,13 +166,13 @@ def upsert_person(profile: dict) -> dict:
         row = conn.execute(
             """
             INSERT INTO people
-                (email, name, program, city, section,
+                (email, name, program, town, section,
                  favorite_spot_la, excited_about, biggest_challenge)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (email) DO UPDATE SET
                 name = EXCLUDED.name,
                 program = EXCLUDED.program,
-                city = EXCLUDED.city,
+                town = EXCLUDED.town,
                 section = EXCLUDED.section,
                 favorite_spot_la = EXCLUDED.favorite_spot_la,
                 excited_about = EXCLUDED.excited_about,
@@ -170,7 +183,7 @@ def upsert_person(profile: dict) -> dict:
                 email,
                 profile["name"],
                 profile["program"],
-                profile["city"],
+                profile["town"],
                 profile["section"],
                 profile["favorite_spot_la"],
                 profile["excited_about"],

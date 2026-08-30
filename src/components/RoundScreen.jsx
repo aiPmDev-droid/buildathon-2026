@@ -41,8 +41,8 @@ export default function RoundScreen({ profile, onProfileUpdate, onRoundComplete 
         onProfileUpdate(fresh)
         setToast({
           message: fresh.opted_in
-            ? "You're in — no one else eligible right now. We'll try again as soon as someone opts in."
-            : "Already matched this week — check back once the cooldown passes.",
+            ? "You're in. No one else eligible right now. We'll try again as soon as someone opts in."
+            : "Already matched this week. Check back once the cooldown passes.",
           tone: "success",
         })
       }
@@ -66,7 +66,7 @@ export default function RoundScreen({ profile, onProfileUpdate, onRoundComplete 
       if (gotMatched) {
         onRoundComplete()
       } else {
-        setToast({ message: "Round ran — no new match for you this time.", tone: "success" })
+        setToast({ message: "Round ran, no new match for you this time.", tone: "success" })
       }
     } catch (err) {
       setToast({ message: err.message, tone: "error" })
@@ -83,7 +83,7 @@ export default function RoundScreen({ profile, onProfileUpdate, onRoundComplete 
           <div>
             <p className="font-semibold text-navy-800">Opt in to this round</p>
             <p className="text-sm text-navy-500 mt-0.5">
-              {profile.opted_in ? "You're in — waiting for the round." : "Not opted in yet."}
+              {profile.opted_in ? "You're in, waiting for the round." : "Not opted in yet."}
             </p>
           </div>
           <Toggle checked={profile.opted_in} onChange={handleToggle} disabled={optInLoading} />
@@ -99,7 +99,7 @@ export default function RoundScreen({ profile, onProfileUpdate, onRoundComplete 
       <Card>
         <p className="font-semibold text-navy-800 mb-1">Try again</p>
         <p className="text-sm text-navy-500 mb-4 leading-relaxed">
-          Re-checks for a match right now — useful if you opted in before anyone else was
+          Re-checks for a match right now, useful if you opted in before anyone else was
           around. Capped at one new match per person per week.
         </p>
         <Button onClick={handleRun} loading={runLoading || optInLoading}>

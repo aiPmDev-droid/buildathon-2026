@@ -5,21 +5,22 @@ from google.genai import types as genai_types
 
 SYSTEM_PROMPT = """
 You write one short, witty opening line for two people who just got matched for a
-coffee chat at UCLA Anderson. Their three answers (favorite spot in LA, what
-they're excited about, biggest challenge) are always worded differently from
-each other by design, but often share a category or vibe underneath (e.g. sushi
-vs. bagels are both food; a marathon vs. surfing are both "outdoorsy"; a case
+coffee chat at UCLA Anderson. You'll see their three answers (favorite spot in
+LA, what they're excited about, biggest challenge). Sometimes an answer is
+literally the same or very close between them; other times the answers are
+worded differently but share a category or vibe underneath (e.g. sushi vs.
+bagels are both food; a marathon vs. surfing are both "outdoorsy"; a case
 competition vs. a dissertation defense are both "high stakes this month").
 
-Find the most interesting underlying connection and phrase it as ONE punchy,
-upbeat sentence, like "Hey! You're both foodies!" or "Sounds like you're both
-chasing a big goal this quarter." If genuinely nothing connects them, make a
-lighthearted joke about how different they are instead — always return a line,
-never explain your reasoning, never use quotation marks, and keep it under 15
-words.
+Find the most interesting connection, literal or underlying, and phrase it as
+ONE punchy, upbeat sentence, like "Hey! You're both foodies!" or "Sounds like
+you're both chasing a big goal this quarter." If genuinely nothing connects
+them, make a lighthearted joke about how different they are instead. Always
+return a line, never explain your reasoning, never use quotation marks or an
+em dash, and keep it under 15 words.
 """.strip()
 
-FALLBACK_HEADLINE = "You two have nothing in common — perfect."
+FALLBACK_HEADLINE = "You two have nothing in common. Perfect."
 
 _MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 

@@ -17,7 +17,7 @@ class SignupRequest(BaseModel):
     name: str = Field(min_length=1)
     email: EmailStr
     program: str = Field(min_length=1)
-    city: str = Field(min_length=1)
+    town: str = Field(min_length=1)
     section: str = Field(min_length=1)
     favorite_spot_la: str = Field(min_length=1)
     excited_about: str = Field(min_length=1)

@@ -18,7 +18,7 @@ const EMPTY = {
   name: "",
   email: "",
   program: PROGRAMS[0],
-  city: "",
+  town: "",
   section: "",
   favorite_spot_la: "",
   excited_about: "",
@@ -72,8 +72,8 @@ function EditProfileForm({ profile, onSaved }) {
           <Field label="Section / subdivision">
             <Input required value={form.section} onChange={update("section")} placeholder="A" />
           </Field>
-          <Field label="City before Anderson">
-            <Input required value={form.city} onChange={update("city")} />
+          <Field label="Town before Anderson">
+            <Input required value={form.town} onChange={update("town")} />
           </Field>
           <Field label="Favorite spot in LA">
             <Input
@@ -111,7 +111,7 @@ function SignupWizard({ onJoined }) {
 
   const stepValid = {
     1: form.name.trim() && form.email.trim(),
-    2: form.program.trim() && form.section.trim() && form.city.trim(),
+    2: form.program.trim() && form.section.trim() && form.town.trim(),
     3:
       form.favorite_spot_la.trim() &&
       form.excited_about.trim() &&
@@ -135,7 +135,7 @@ function SignupWizard({ onJoined }) {
   return (
     <Screen
       title="Let's get you ready"
-      subtitle="Takes about 2 minutes — you can update your answers anytime."
+      subtitle="Takes about 2 minutes. You can update your answers anytime."
     >
       <Toast {...toast} />
       <Card>
@@ -147,7 +147,7 @@ function SignupWizard({ onJoined }) {
             <Field label="Photo">
               <div className="flex items-center gap-3">
                 <div className="h-14 w-14 rounded-full bg-navy-50 flex items-center justify-center text-2xl text-navy-300">
-                  🙂
+                  😄
                 </div>
                 <button
                   type="button"
@@ -195,8 +195,8 @@ function SignupWizard({ onJoined }) {
             <Field label="Section / subdivision">
               <Input value={form.section} onChange={update("section")} placeholder="Section A" />
             </Field>
-            <Field label="City before Anderson">
-              <Input value={form.city} onChange={update("city")} placeholder="Chicago" />
+            <Field label="Town before Anderson">
+              <Input value={form.town} onChange={update("town")} placeholder="Chicago" />
             </Field>
           </div>
         )}
@@ -205,7 +205,7 @@ function SignupWizard({ onJoined }) {
           <div>
             <p className="font-semibold text-navy-900 mb-1">A little about you</p>
             <p className="text-sm text-navy-500 mb-4">
-              This helps us find you an interesting match.
+              This helps your match get to know you a bit
             </p>
             <Field label="Favorite spot in LA">
               <Input
@@ -218,14 +218,14 @@ function SignupWizard({ onJoined }) {
               <Textarea
                 value={form.excited_about}
                 onChange={update("excited_about")}
-                placeholder="Could be anything — a class, a trip, a project, a new hobby..."
+                placeholder="It could be anything, a project, a trip, a new hobby."
               />
             </Field>
             <Field label="What's your biggest challenge right now?">
               <Textarea
                 value={form.biggest_challenge}
                 onChange={update("biggest_challenge")}
-                placeholder="Recruiting, a class, navigating LA traffic — whatever's on your mind."
+                placeholder="Recruiting, a class, navigating LA traffic, whatever's on your mind."
               />
             </Field>
           </div>
