@@ -49,6 +49,11 @@ def _ensure_schema(conn) -> None:
         )
         """
     )
+    # Cooldown is tracked here, separately from the `matches` table, on
+    # purpose: `matches` is the permanent "have these two ever been paired"
+    # record and must never be edited to manage cooldown, or the never-repeat
+    # guarantee breaks (this bit us once — see reset_cooldown_for_all).
+    conn.execute("ALTER TABLE people ADD COLUMN IF NOT EXISTS last_matched_at TIMESTAMPTZ")
     conn.execute(
         """
         DO $$
@@ -145,21 +150,28 @@ def get_matches() -> list[dict]:
 
 
 def get_recently_matched_emails(within_days: int = REMATCH_COOLDOWN_DAYS) -> set[str]:
-    """Emails that appeared in any match within the cooldown window — ineligible
-    for a new round until it passes, even if still opted in."""
+    """Emails ineligible for a new round because they were matched within the
+    cooldown window, even if still opted in. Reads people.last_matched_at,
+    NOT the matches table — cooldown and match history are intentionally
+    separate so clearing one can never corrupt the other."""
     with _connect() as conn:
         rows = conn.execute(
             """
-            SELECT person_a_email, person_b_email FROM matches
-            WHERE matched_at > now() - (%s || ' days')::interval
+            SELECT email FROM people
+            WHERE last_matched_at > now() - (%s || ' days')::interval
             """,
             (within_days,),
         ).fetchall()
-    emails: set[str] = set()
-    for r in rows:
-        emails.add(r["person_a_email"])
-        emails.add(r["person_b_email"])
-    return emails
+    return {r["email"] for r in rows}
+
+
+def reset_cooldown_for_all() -> None:
+    """Clears the rematch cooldown for every person, for demo purposes.
+    Only touches people.last_matched_at — never deletes from `matches`,
+    which stays the permanent, untouchable record of who's already been
+    paired with whom."""
+    with _connect() as conn:
+        conn.execute("UPDATE people SET last_matched_at = NULL")
 
 
 def get_person(email: str) -> Optional[dict]:
@@ -230,6 +242,11 @@ def append_matches(round_id: str, pairs: list[tuple[str, str]]) -> None:
                 "VALUES (%s, %s, %s)",
                 [(round_id, a, b) for a, b in pairs],
             )
+        matched_emails = {email for pair in pairs for email in pair}
+        conn.execute(
+            "UPDATE people SET last_matched_at = now() WHERE email = ANY(%s)",
+            (list(matched_emails),),
+        )
 
 
 def next_round_id() -> str:
